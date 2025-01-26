@@ -26,7 +26,7 @@ A robust parking management system backend with SQLite integration that handles 
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/parking-management.git
+git clone https://github.com/nikzart/parking-management.git
 cd parking-management
 ```
 
