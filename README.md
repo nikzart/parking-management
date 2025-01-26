@@ -4,37 +4,36 @@ A robust parking management system backend with SQLite integration that handles 
 
 ## Features
 
-- Vehicle tracking with number plate, contact details, and timestamps
-- Configurable data retention policy
+- Vehicle tracking with unique number plates
 - Real-time vehicle search via WebSocket
+- Automated data cleanup based on retention period
 - Comprehensive audit logging
-- Automated data cleanup
 - Rate limiting and security measures
 - Prometheus metrics integration
-- Health check endpoints
-- Docker containerization
-- API documentation with OpenAPI/Swagger
+- Full test coverage
+- OpenAPI/Swagger documentation
 
-## Prerequisites
+## Tech Stack
 
-- Python 3.9+
-- Docker and Docker Compose (for containerized deployment)
-- SQLite 3
+- FastAPI for REST and WebSocket APIs
+- SQLite with SQLAlchemy ORM
+- Pydantic for data validation
+- Prometheus for metrics
+- pytest for testing
+- Docker support
 
-## Installation
+## Quick Start
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd parking-system
+git clone https://github.com/yourusername/parking-management.git
+cd parking-management
 ```
 
-2. Create a virtual environment (optional but recommended):
+2. Create and activate virtual environment:
 ```bash
 python -m venv venv
-source venv/bin/activate  # Linux/macOS
-# or
-.\venv\Scripts\activate  # Windows
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
 3. Install dependencies:
@@ -42,137 +41,107 @@ source venv/bin/activate  # Linux/macOS
 pip install -r requirements.txt
 ```
 
-4. Set up environment variables:
+4. Copy environment example and configure:
 ```bash
 cp .env.example .env
-# Edit .env with your configuration
+# Edit .env with your settings
 ```
 
-## Running the Application
-
-### Local Development
-
-1. Initialize the database:
+5. Run database migrations:
 ```bash
 alembic upgrade head
 ```
 
-2. Run the development server:
+6. Start the server:
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload
 ```
 
-### Docker Deployment
+The API will be available at http://localhost:8000
 
-1. Build and start the containers:
+## Docker Support
+
+Build and run with Docker:
+
 ```bash
-docker-compose up -d --build
+docker build -t parking-management .
+docker run -p 8000:8000 parking-management
 ```
 
-2. Check container status:
+Or using docker-compose:
+
 ```bash
-docker-compose ps
+docker-compose up
 ```
 
 ## API Documentation
 
-Once the server is running, access the OpenAPI documentation at:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- REST API: http://localhost:8000/api/docs
+- ReDoc: http://localhost:8000/api/redoc
+- Detailed documentation in [docs/api/](docs/api/)
 
-## API Endpoints
+## Development
 
-### Vehicle Management
+1. Install development dependencies:
+```bash
+pip install -r requirements-dev.txt
+```
 
-- `POST /api/v1/vehicles` - Register new vehicle entry
-- `GET /api/v1/vehicles` - List all active vehicles
-- `GET /api/v1/vehicles/{number}` - Retrieve specific vehicle details
-- `DELETE /api/v1/vehicles/{number}` - Manual vehicle removal
-- `WebSocket /ws/vehicles/search` - Real-time vehicle search
+2. Run tests:
+```bash
+pytest tests/ -v --cov=app --cov-report=term-missing
+```
 
-### System Configuration
+3. Generate API documentation:
+```bash
+pytest tests/test_docs.py -v
+```
 
-- `PUT /api/v1/config/retention` - Update data retention period
-- `GET /api/v1/config/retention` - Get current retention setting
-- `POST /api/v1/maintenance/clear` - Clear entire database
-
-### Audit Logs
-
-- `GET /api/v1/audit` - Get audit logs with filtering
-- `GET /api/v1/audit/recent` - Get recent audit logs
-- `GET /api/v1/audit/entity/{entity}` - Get logs for specific entity
-
-### Health Checks
-
-- `GET /health` - Basic health check
-- `GET /health/details` - Detailed system health status
-
-## WebSocket Usage
-
-Connect to the WebSocket endpoint with an API key:
-```javascript
-const ws = new WebSocket('ws://localhost:8000/ws/vehicles/search?api_key=your-api-key');
-
-ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    console.log('Received:', data);
-};
-
-// Send search request
-ws.send(JSON.stringify({
-    type: 'search',
-    search_term: 'ABC123'
-}));
+4. Run linting:
+```bash
+flake8 app tests
+black app tests
+isort app tests
 ```
 
 ## Monitoring
 
-The system includes Prometheus metrics and Grafana dashboards:
-
-- Prometheus: http://localhost:9091
-- Grafana: http://localhost:3000 (default credentials: admin/admin)
-
-## Development
-
-### Running Tests
-
-```bash
-pytest
-```
-
-### Database Migrations
-
-Create a new migration:
-```bash
-alembic revision --autogenerate -m "description"
-```
-
-Apply migrations:
-```bash
-alembic upgrade head
-```
-
-Rollback migration:
-```bash
-alembic downgrade -1
-```
+- Health check: http://localhost:8000/health
+- Metrics: http://localhost:8000/metrics (Prometheus format)
 
 ## Security
 
 - API key authentication required for all endpoints
-- Rate limiting per client
-- Input validation and sanitization
-- CORS configuration
-- Audit logging for all operations
+- Rate limiting per API key
+- Input validation using Pydantic
+- SQL injection protection via SQLAlchemy
+- WebSocket connection limits
+
+## Project Structure
+
+```
+.
+├── app/
+│   ├── api/            # API routes and websocket handlers
+│   ├── core/           # Core functionality and config
+│   ├── models/         # SQLAlchemy models
+│   ├── schemas/        # Pydantic schemas
+│   └── services/       # Business logic
+├── docs/
+│   └── api/           # API documentation
+├── tests/             # Test suite
+├── alembic/           # Database migrations
+└── docker/            # Docker configuration
+```
 
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
