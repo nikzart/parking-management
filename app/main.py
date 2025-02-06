@@ -3,12 +3,15 @@ from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 import time
 import uuid
+import asyncio
 import prometheus_client
 from prometheus_client import Counter, Histogram
 from fastapi.responses import JSONResponse
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.api.routes import vehicles, config, audit
+from app.core.database import SessionLocal
 from app.api.websockets import handle_websocket_connection
 from app.services.services import vehicle_service
 from app.core.database import engine
@@ -27,14 +30,36 @@ REQUEST_LATENCY = Histogram(
     ["method", "endpoint"]
 )
 
+async def cleanup_task():
+    """Periodic task to cleanup expired vehicle records."""
+    while True:
+        try:
+            db = SessionLocal()
+            vehicle_service.cleanup_expired_vehicles(db)
+        except Exception as e:
+            print(f"Error in cleanup task: {e}")
+        finally:
+            db.close()
+        # Run every hour
+        await asyncio.sleep(3600)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan events for FastAPI app."""
     # Startup
     Base.metadata.create_all(bind=engine)
+    
+    # Start cleanup task
+    cleanup_task_handle = asyncio.create_task(cleanup_task())
+    
     yield
+    
     # Shutdown
-    pass
+    cleanup_task_handle.cancel()
+    try:
+        await cleanup_task_handle
+    except asyncio.CancelledError:
+        pass
 
 # Initialize FastAPI app
 app = FastAPI(
